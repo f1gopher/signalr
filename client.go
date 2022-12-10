@@ -137,6 +137,11 @@ func (s *CallbackStream) Read(args ...interface{}) error {
 	return nil
 }
 
+func (s *CallbackStream) ReadRaw() ClientMsg {
+	res := s.readResult()
+	return res.message
+}
+
 func (s *CallbackStream) readResult() callbackResult {
 	// ensure non-blocking read of backlog
 	select {
@@ -310,6 +315,26 @@ func (c *callbacks) create(ctx context.Context, method string) (*CallbackStream,
 
 func (c *callbacks) process(msg *Message) {
 	if len(msg.Messages) == 0 {
+		if len(msg.Result) != 0 {
+			c.mtx.Lock()
+			defer c.mtx.Unlock()
+			callback, ok := c.data["feed"]
+			if ok {
+
+				clientMsg := ClientMsg{
+					InvocationID: 0,
+					Hub:          "Streaming",
+					Method:       "feed",
+					Args:         []json.RawMessage{msg.Result},
+					State:        nil,
+				}
+
+				select {
+				case callback.ch <- callbackResult{message: clientMsg}:
+				}
+			}
+		}
+
 		return
 	}
 
