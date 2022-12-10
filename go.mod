@@ -1,6 +1,6 @@
-module github.com/rainhq/signalr/v2
+module github.com/f1gopher/signalr/v2
 
-go 1.15
+go 1.19
 
 require (
 	github.com/cenkalti/backoff/v4 v4.1.0
